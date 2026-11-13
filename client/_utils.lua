@@ -43,31 +43,15 @@ end
 function PoliceAlert()
     if Config.Illegal then
         if math.random(1,100) >= Config.AlertChance then return end
-        if Config.Dispatch == 'community_bridge' then
+        local coords = GetEntityCoords(PlayerPedId())
+        local fn = type(Config.Dispatch) == 'table' and Config.Dispatch.Function
+        local ok, err = pcall(fn or function()
             exports.community_bridge:Dispatch().SendAlert({
-                coords = GetEntityCoords(PlayerPedId()),
-                message = Lang:t('police.message'),
-                code = Lang:t('police.code'),
-                blipData = { sprite = 318, color = 1, scale = 0.5 },
-                jobs = { 'police' },
+                coords = coords, message = Lang:t('police.message'), code = Lang:t('police.code'),
+                blipData = { sprite = 318, color = 1, scale = 0.5 }, jobs = { 'police' },
             })
-        elseif Config.Dispatch == 'ps-dispatch' then
-            exports["ps-dispatch"]:CustomAlert({
-                coords = GetEntityCoords(PlayerPedId()),
-                message = Lang:t('police.message'),
-                dispatchCode = Lang:t('police.code'),
-                description = Lang:t('police.bliptitle'),
-                radius = 0,
-                sprite = 318,
-                color = 1,
-                scale = 0.5,
-                length = 3,
-            })
-        elseif Config.Dispatch == 'qb-core' then
-            TriggerServerEvent('police:server:policeAlert', Lang:t('police.bliptitle'))
-        else
-            print('[lb-dumpster] Config.Dispatch does not have a valid argument')
-        end
+        end, coords)
+        if not ok then print(('[gldnrmz-dumpsters] Config.Dispatch.Function failed: %s'):format(err)) end
     end
 end
 

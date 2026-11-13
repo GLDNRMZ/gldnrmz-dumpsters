@@ -46,7 +46,32 @@ Config.StorageSize = 50 -- Storage Size
 -- ## Police Configs
 Config.Illegal = false -- True will send an alert using the % on Config.AlertChance
 Config.AlertChance = 10
-Config.Dispatch = 'community_bridge' -- Available options: 'community_bridge' (any dispatch it supports), 'ps-dispatch' or 'qb-core'
+Config.Dispatch = {
+    -- Default: community_bridge sends it to whatever dispatch you run (ps / cd / qs / lb / tk / ...).
+    Function = function(coords)
+        exports.community_bridge:Dispatch().SendAlert({
+            message = Lang:t('police.message'),
+            code = Lang:t('police.code'),
+            coords = coords,
+            jobs = { 'police' },
+            blipData = { sprite = 318, color = 1, scale = 0.5 },
+        })
+    end,
+    -- tk_dispatch directly (more detail), if you prefer:
+    --[[ Function = function(coords)
+        exports.tk_dispatch:addCall({
+            title = 'Dumpster Diving',
+            code = '10-66',
+            priority = 'Priority 2',
+            coords = coords,
+            showLocation = true,
+            showGender = true,
+            playSound = true,
+            blip = { sprite = 318, color = 1, scale = 0.5 },
+            jobs = { 'police' },
+        })
+    end, ]]
+}
 
 -- ## Hurting Configs
 Config.Hurting = true -- True will give a chance to the player to be hurt
