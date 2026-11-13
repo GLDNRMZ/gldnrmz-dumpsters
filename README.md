@@ -4,18 +4,18 @@ Dumpster diving and trash selling. Original dumpster script by [zf-labo](https:/
 
 Works on Qbox, QBCore and ESX with any target, inventory, menu, notify, progress bar and dispatch supported by [community_bridge](https://github.com/TheOrderFivem/community_bridge).
 
-## Features
+## ✨ Features
 - Search anything that looks like it contains trash (`Config.Props`)
 - Tier-based loot, with a chance of getting hurt or bleeding
 - Sell trash to homeless peds; they may steal your food and drugs instead
 - Optional storage inside dumpsters (code snippets from [Jakers](https://jakers.tebex.io/package/4923802))
 - Optional police alert and minigame
 
-## Requirements
-- `community_bridge` **0.13.6 or newer** (Qbox, QBCore or ESX)
+## 📦 Requirements
+- [community_bridge](https://github.com/TheOrderFivem/community_bridge) **0.13.6 or newer** ([Qbox](https://github.com/Qbox-project/qbx_core), [QBCore](https://github.com/qbcore-framework/qb-core) or [ESX](https://github.com/esx-framework/esx_core))
 - Optional minigames (`Config.Minigame`): `qb-lock`, `memorygame` or `ps-ui` (off by default)
 
-## Installation
+## ⚡ Installation
 1. Start `community_bridge` before this resource, then add `ensure gldnrmz-dumpsters` to `server.cfg`.
 2. Add the items below to your inventory's item list (QBCore format shown; use the same names for ox_inventory or ESX), and copy the images from `images/` into your inventory's image folder.
 3. Adjust `config.lua` (searchable props, loot tiers, sell prices, homeless ped locations).
@@ -35,7 +35,7 @@ Works on Qbox, QBCore and ESX with any target, inventory, menu, notify, progress
 ['wires'] 			 	         = {['name'] = 'wires', 			  		    ['label'] = 'Electrical Wires', 		['weight'] = 50, 		['type'] = 'item', 		['image'] = 'wires.png', 		    ['unique'] = false,		['useable'] = false,  	['shouldClose'] = true,    ['combinable'] = nil,   ['description'] = 'Torn Electrical Wires'},
 ```
 
-## Configuration
+## ⚙️ Configuration
 Everything is in `config.lua`. Highlights:
 
 | Option | What it does |
@@ -51,7 +51,20 @@ Everything is in `config.lua`. Highlights:
 | `Config.ItemsSell` | What homeless peds buy, and for how much |
 | `Config.BumSteal` / `Config.ItemsSteal` | Homeless peds stealing from you |
 
-## Changes in 1.1.0
+## 🆕 Changes in 1.1.0
 - Runs on Qbox, QBCore and ESX through community_bridge (no qb-core / qb-target requirement).
 - The police alert is a config function (any dispatch).
 - Fixed an invalid `Config.ItemsSteal` entry; homeless peds can't be made to steal through a client event; each dumpster can only be looted once per reset.
+
+<!-- gldnrmz-links -->
+---
+
+## 🔗 Links
+
+<p align="center">
+  <a href="https://discord.gg/7YHJ7774jA"><img src="https://img.shields.io/badge/Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord" /></a>
+  <a href="https://forum.cfx.re/u/gldnrmz/summary"><img src="https://img.shields.io/badge/Cfx.re-F40552?style=for-the-badge&logoColor=white" alt="Cfx.re forum" /></a>
+  <a href="https://5metrics.dev/resources?search=gldnrmz"><img src="https://img.shields.io/badge/5Metrics-00BFFF?style=for-the-badge&logoColor=white" alt="5Metrics" /></a>
+  <a href="https://gldnrmz.tebex.io"><img src="https://img.shields.io/badge/Tebex-FFD700?style=for-the-badge&logoColor=black" alt="Tebex store" /></a>
+  <a href="https://www.buymeacoffee.com/gldnrmz"><img src="https://img.shields.io/badge/Buy%20me%20a%20coffee-FF813F?style=for-the-badge&logo=buymeacoffee&logoColor=white" alt="Buy me a coffee" /></a>
+</p>
