@@ -56,6 +56,10 @@ Everything is in `config.lua`. Highlights:
 - The police alert is a config function (any dispatch).
 - Fixed an invalid `Config.ItemsSteal` entry; homeless peds can't be made to steal through a client event; each dumpster can only be looted once per reset.
 
+## 📄 License
+
+[GPL-3.0](LICENSE). This script is based on zf-labo (zf-dumpster-qb)'s original work, which keeps it under the GPL. Keep all author credits.
+
 <!-- gldnrmz-links -->
 ---
 
