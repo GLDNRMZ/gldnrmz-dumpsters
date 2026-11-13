@@ -1,24 +1,26 @@
-# GLDNRMZ-dumpsters
-Dumpster Diving and Trash Selling
+# gldnrmz-dumpsters
 
-Original dumpster script by [zf-labo](https://github.com/zf-labo/zf-dumpster-qb)
+Dumpster diving and trash selling. Original dumpster script by [zf-labo](https://github.com/zf-labo/zf-dumpster-qb).
 
 Works on Qbox, QBCore and ESX with any target, inventory, menu, notify, progress bar and dispatch supported by [community_bridge](https://github.com/TheOrderFivem/community_bridge).
 
-# Requirements
-* community_bridge (with Qbox, QBCore or ESX)
-* Add the items below to your inventory's item list (QBCore shared items shown; use the same names for ox_inventory or ESX)
+## Features
+- Search anything that looks like it contains trash (`Config.Props`)
+- Tier-based loot, with a chance of getting hurt or bleeding
+- Sell trash to homeless peds; they may steal your food and drugs instead
+- Optional storage inside dumpsters (code snippets from [Jakers](https://jakers.tebex.io/package/4923802))
+- Optional police alert and minigame
 
-# Additions
-* Search anything that looks like it contains trash
-* Tier based loot system
-* Trash items
-* Sell trash items to any homeless ped
-* Chance homeless ped steals your food and drugs
-* Added ablity to store items in trash. Code snippets from [Jakers](https://jakers.tebex.io/package/4923802)
+## Requirements
+- `community_bridge` **0.13.6 or newer** (Qbox, QBCore or ESX)
+- Optional minigames (`Config.Minigame`): `qb-lock`, `memorygame` or `ps-ui` (off by default)
 
-# Add Items to Shared lua
-```
+## Installation
+1. Start `community_bridge` before this resource, then add `ensure gldnrmz-dumpsters` to `server.cfg`.
+2. Add the items below to your inventory's item list (QBCore format shown; use the same names for ox_inventory or ESX), and copy the images from `images/` into your inventory's image folder.
+3. Adjust `config.lua` (searchable props, loot tiers, sell prices, homeless ped locations).
+
+```lua
 ['cd'] 				             = {['name'] = 'cd', 			  	  	        ['label'] = 'Compact Disk', 		    ['weight'] = 50, 		['type'] = 'item', 		['image'] = 'cd.png', 		        ['unique'] = false, 	['useable'] = false,  	['shouldClose'] = true,    ['combinable'] = nil,   ['description'] = 'Relic of the 90s'},
 ['newspaper'] 			 	     = {['name'] = 'newspaper', 			  		['label'] = 'Old Newspaper', 		    ['weight'] = 50, 		['type'] = 'item', 		['image'] = 'newspaper.png', 		['unique'] = false,		['useable'] = false,  	['shouldClose'] = true,    ['combinable'] = nil,   ['description'] = 'Last weeks newspaper'},
 ['wrapper'] 			 	     = {['name'] = 'wrapper', 					    ['label'] = 'Used Food Wrapper', 		['weight'] = 50, 		['type'] = 'item', 		['image'] = 'wrapper.png', 		    ['unique'] = false,	    ['useable'] = false,  	['shouldClose'] = true,    ['combinable'] = nil,   ['description'] = 'Up-N-Atom Burger wrapper'},
@@ -32,17 +34,24 @@ Works on Qbox, QBCore and ESX with any target, inventory, menu, notify, progress
 ['ducttape'] 				     = {['name'] = 'ducttape', 			  	  	    ['label'] = 'Duct Tape', 		        ['weight'] = 50, 		['type'] = 'item', 		['image'] = 'ducttape.png', 		['unique'] = false, 	['useable'] = false,  	['shouldClose'] = true,    ['combinable'] = nil,   ['description'] = 'Roll of Duct Tape'},
 ['wires'] 			 	         = {['name'] = 'wires', 			  		    ['label'] = 'Electrical Wires', 		['weight'] = 50, 		['type'] = 'item', 		['image'] = 'wires.png', 		    ['unique'] = false,		['useable'] = false,  	['shouldClose'] = true,    ['combinable'] = nil,   ['description'] = 'Torn Electrical Wires'},
 ```
-	
-# Add Images to Inventory Script
 
-# Change config.lua Options and Items to Fit Your Servers Needs.
+## Configuration
+Everything is in `config.lua`. Highlights:
 
-# Dependencies:
-* [qb-core](https://github.com/qbcore-framework/qb-core)
-* [qb-target](https://github.com/qbcore-framework/qb-target)
+| Option | What it does |
+| --- | --- |
+| `Config.Props` | Models that can be searched |
+| `Config.ResetOnReboot` / `Config.ResetTime` | When a searched dumpster can be searched again |
+| `Config.Minigame` | `false`, `'qb-lock'`, `'memorygame'` or `'ps-ui'` |
+| `Config.Storage` | Let players store items in dumpsters |
+| `Config.Illegal` / `Config.AlertChance` | Send a police alert when searching |
+| `Config.Dispatch.Function` | Which dispatch the alert uses. community_bridge by default; a tk_dispatch example is included |
+| `Config.Hurting` / `Config.CanBleed` | Chance to get hurt / bleed while searching |
+| `Config.LootTiers` | Loot tables |
+| `Config.ItemsSell` | What homeless peds buy, and for how much |
+| `Config.BumSteal` / `Config.ItemsSteal` | Homeless peds stealing from you |
 
-# Optional Dependencies:
-* [ps-dispatch](https://github.com/Project-Sloth/ps-dispatch)
-* [memorygame](https://github.com/pushkart2/memorygame)
-* [qb-lock](https://github.com/YishengCheww/qb-lock)
-* [ps-ui](https://github.com/Project-Sloth/ps-ui)
+## Changes in 1.1.0
+- Runs on Qbox, QBCore and ESX through community_bridge (no qb-core / qb-target requirement).
+- The police alert is a config function (any dispatch).
+- Fixed an invalid `Config.ItemsSteal` entry; homeless peds can't be made to steal through a client event; each dumpster can only be looted once per reset.
