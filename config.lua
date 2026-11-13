@@ -1,6 +1,6 @@
 Config = {}
 
-Config.Inventory = "New" -- If using old qb-inventory change to "Old"
+-- Framework, target, inventory, menu, notify and progress bar come from community_bridge (Qbox, QBCore, ESX).
 
 -----------
 ----BIN----
@@ -46,7 +46,7 @@ Config.StorageSize = 50 -- Storage Size
 -- ## Police Configs
 Config.Illegal = false -- True will send an alert using the % on Config.AlertChance
 Config.AlertChance = 10
-Config.Dispatch = 'ps-dispatch' -- Available options: 'ps-dispatch' or 'qb-core'
+Config.Dispatch = 'community_bridge' -- Available options: 'community_bridge' (any dispatch it supports), 'ps-dispatch' or 'qb-core'
 
 -- ## Hurting Configs
 Config.Hurting = true -- True will give a chance to the player to be hurt
@@ -179,19 +179,19 @@ Config.ItemsSell = { -- Items and prices the bums will buy
 Config.BumSteal = true -- Allow bums to steal from you if you do not have any items above in your inventory
 Config.StealChance = 50 -- Chance to steal from you
 Config.ItemsSteal = { -- Items that they can steal
-    ['ambeer'], 
-    ['dusche-beer'], 
-    ['logger-beer'], 
-    ['stronzo-beer'], 
-    ['meth'],
-    ['coke'],
-    ['lsd'],
-    ['heroin'],
-    ['weed_joint'],  
-    ['tosti'],			
-    ['twerks_candy'],	
-    ['snikkel_candy'],	
-    ['sandwich'],
+    ['ambeer'] = true, 
+    ['dusche-beer'] = true, 
+    ['logger-beer'] = true, 
+    ['stronzo-beer'] = true, 
+    ['meth'] = true,
+    ['coke'] = true,
+    ['lsd'] = true,
+    ['heroin'] = true,
+    ['weed_joint'] = true,  
+    ['tosti'] = true,			
+    ['twerks_candy'] = true,	
+    ['snikkel_candy'] = true,	
+    ['sandwich'] = true,
 }
 
 ------------

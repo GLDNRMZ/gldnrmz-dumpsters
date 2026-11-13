@@ -3,6 +3,12 @@ Dumpster Diving and Trash Selling
 
 Original dumpster script by [zf-labo](https://github.com/zf-labo/zf-dumpster-qb)
 
+Works on Qbox, QBCore and ESX with any target, inventory, menu, notify, progress bar and dispatch supported by [community_bridge](https://github.com/TheOrderFivem/community_bridge).
+
+# Requirements
+* community_bridge (with Qbox, QBCore or ESX)
+* Add the items below to your inventory's item list (QBCore shared items shown; use the same names for ox_inventory or ESX)
+
 # Additions
 * Search anything that looks like it contains trash
 * Tier based loot system

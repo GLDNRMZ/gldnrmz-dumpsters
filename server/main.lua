@@ -1,5 +1,18 @@
+-- Qbox / QBCore / ESX through community_bridge
+local Framework = exports.community_bridge:Framework()
+local Inventory = exports.community_bridge:Inventory()
+local Notify = exports.community_bridge:Notify()
+
 local entities = {}
-QBCore = exports['qb-core']:GetCoreObject()
+
+local function notify(src, message, notifyType)
+    Notify.SendNotify(src, message, notifyType or 'info', 5000)
+end
+
+local function itemLabel(name)
+    local ok, info = pcall(Inventory.GetItemInfo, name)
+    return ok and type(info) == 'table' and info.label or name
+end
 
 -----------
 ----BIN----
@@ -9,12 +22,10 @@ RegisterNetEvent('lb-dumpster:server:ResetEntity', function(entity)
 end)
 
 function EntityRespawn()
-    if entities ~= nil or entities ~= {} then
-        for _,t in pairs(entities) do
-            entities[_] = t + 1
-            if t >= 0 and t >= Config.ResetTime then
-                entities[_] = -1
-            end
+    for key, t in pairs(entities) do
+        entities[key] = t + 1
+        if t >= 0 and t >= Config.ResetTime then
+            entities[key] = -1
         end
     end
     SetTimeout(60000, EntityRespawn)
@@ -24,44 +35,33 @@ if not Config.ResetOnReboot then
     EntityRespawn()
 end
 
-RegisterNetEvent('lb-dumpster:server:SetEntity', function(netId, isFinished)
-    entities[netId] = 0
-    DropItem(isFinished, netId, source)
-end)
+local function wasDived(netId)
+    return not (entities[netId] == -1 or entities[netId] == nil)
+end
 
 local function pGive(playerId, item, amount)
-    local Player = QBCore.Functions.GetPlayer(playerId)
-    if not Player then return end
     if type(item) == 'string' then
-        Player.Functions.AddItem(item, amount)
-        if QBCore.Shared.Items[i.item].label then
-            local itemString = amount .. 'x ' .. QBCore.Shared.Items[i.item].label
-            TriggerClientEvent('QBCore:Notify', playerId, Lang:t('notifies.you_got', {items = itemString}))
-        else
-            TriggerClientEvent('QBCore:Notify', playerId, Lang:t('notifies.you_got', {items = item}))
-        end
-    elseif type(item) == 'table' and amount == 10000 then
+        Inventory.AddItem(playerId, item, amount)
+        notify(playerId, Lang:t('notifies.you_got', { items = amount .. 'x ' .. itemLabel(item) }))
+    elseif type(item) == 'table' then
+        if #item <= 0 then return notify(playerId, Lang:t('notifies.got_nothing')) end
+
         local itemString = ''
-        if #item <= 0 then TriggerClientEvent('QBCore:Notify', playerId, Lang:t('notifies.got_nothing')) return end
-        for _,i in pairs(item) do
-            Player.Functions.AddItem(i.item, i.amount)
-            itemString = i.amount .. 'x ' .. QBCore.Shared.Items[i.item].label .. ', ' .. itemString
+        for _, i in pairs(item) do
+            Inventory.AddItem(playerId, i.item, i.amount)
+            itemString = i.amount .. 'x ' .. itemLabel(i.item) .. ', ' .. itemString
         end
 
         if itemString ~= '' then
-            TriggerClientEvent('QBCore:Notify', playerId, Lang:t('notifies.you_got', {items = itemString}))
+            notify(playerId, Lang:t('notifies.you_got', { items = itemString }))
         else
-            TriggerClientEvent('QBCore:Notify', playerId, Lang:t('notifies.got_nothing'))
+            notify(playerId, Lang:t('notifies.got_nothing'))
         end
     end
 end
 
-
 function DropItem(finished, netId, playerId)
-    local Player = QBCore.Functions.GetPlayer(playerId)
-    if not Player then return end
-    if not netId then return end
-    if not finished then return end
+    if not netId or not finished then return end
 
     local totalChances = 0
     for _, tierData in pairs(Config.LootTiers) do
@@ -70,46 +70,50 @@ function DropItem(finished, netId, playerId)
 
     local tierRoll = math.random(1, totalChances)
     local selectedTier = nil
-    for tierName, tierData in pairs(Config.LootTiers) do
+    for _, tierData in pairs(Config.LootTiers) do
         if tierRoll <= tierData.chances then
             selectedTier = tierData
-            --print("Selected Tier:", tierName, "with roll:", tierRoll)
             break
         else
             tierRoll = tierRoll - tierData.chances
         end
     end
 
-    if not selectedTier then
-        --print("ERROR: No tier selected for loot drop")
-        return
-    end
+    if not selectedTier then return end
 
     if Config.CanLootMultiple then
         local itemTable = {}
         local itemAmount = math.random(1, Config.MaxLootItem)
 
-        for i = 1, itemAmount do
+        for _ = 1, itemAmount do
             local item = selectedTier.loottable[math.random(1, #selectedTier.loottable)]
-            itemTable[#itemTable+1] = {item = item.item, amount = math.floor(math.random(item.min, item.max))}
+            itemTable[#itemTable+1] = { item = item.item, amount = math.floor(math.random(item.min, item.max)) }
         end
 
-        return pGive(playerId, itemTable, 10000)
+        return pGive(playerId, itemTable)
     else
         local item = selectedTier.loottable[math.random(1, #selectedTier.loottable)]
         return pGive(playerId, item.item, math.random(item.min, item.max))
     end
 end
 
-QBCore.Functions.CreateCallback('lb-dumpster:server:getEntityState', function(source, cb, netId)
-    if entities[netId] == -1 or entities[netId] == nil then cb(false) else cb(true) end
+RegisterNetEvent('lb-dumpster:server:SetEntity', function(netId, isFinished)
+    local src = source
+    -- Loot each dumpster once until it resets
+    if wasDived(netId) then return end
+    entities[netId] = 0
+    DropItem(isFinished, netId, src)
+end)
+
+RegisterNetEvent('lb-dumpster:server:getEntityState', function(netId, requestId)
+    TriggerClientEvent('lb-dumpster:client:entityState', source, requestId, wasDived(netId))
 end)
 
 AddEventHandler('onResourceStop', function(resName)
     if resName ~= GetCurrentResourceName() then return end
-    for _,v in pairs(entities) do
+    for key, v in pairs(entities) do
         if v == -1 then
-            TriggerClientEvent('lb-dumpster:client:ResetEntity', -1, _)
+            TriggerClientEvent('lb-dumpster:client:ResetEntity', -1, key)
         end
     end
 end)
@@ -117,84 +121,79 @@ end)
 -----------
 ----BUM----
 -----------
+local function playerItems(src)
+    local ok, items = pcall(Inventory.GetPlayerInventory, src)
+    return ok and type(items) == 'table' and items or {}
+end
+
+--stealing (server-only: never callable from a client)
+local function pedStealItems(src)
+    local itemsStolen = false
+    local removedItems = {}
+
+    for k, v in pairs(playerItems(src)) do
+        local itemName = v.name
+        local amount = tonumber(v.count or v.amount) or 0
+
+        if Config.ItemsSteal[itemName] and amount > 0 and math.random(1, 100) <= Config.StealChance then
+            local amountToSteal = math.random(1, amount)
+            local slot = (v.slot and v.slot > 0) and v.slot or nil
+            if Inventory.RemoveItem(src, itemName, amountToSteal, slot) then
+                removedItems[k] = { name = itemName, amount = amountToSteal }
+                itemsStolen = true
+                if Config.BumSteal then
+                    notify(src, "GIVE ME YO SHIT, BITCH!", 'error')
+                end
+            end
+        end
+    end
+
+    if next(removedItems) then
+        TriggerEvent('lb-dumpster:server:onPedStealItems', src, removedItems)
+    end
+
+    if not itemsStolen then
+        notify(src, "You ain't got shit I want")
+    end
+end
+
 --selling
 RegisterNetEvent('lb-dumpster:server:sellItems', function()
     local src = source
     local totalPrice = 0
-    local Player = QBCore.Functions.GetPlayer(src)
 
-    if Player.PlayerData.items then
-        local removedItems = {}
+    for _, v in pairs(playerItems(src)) do
+        local itemName = v.name
+        local amount = tonumber(v.count or v.amount) or 0
 
-        for k, v in pairs(Player.PlayerData.items) do
-            local itemName = v.name
-
-            if Config.ItemsSell[itemName] then
-                local itemPrice = Config.ItemsSell[itemName].price * v.amount
-                totalPrice = totalPrice + itemPrice
-                removedItems[k] = { name = itemName, amount = v.amount }
-                Player.Functions.RemoveItem(itemName, v.amount, k)
-                TriggerClientEvent('inventory:client:ItemBox', src, QBCore.Shared.Items[itemName], "remove")
+        if Config.ItemsSell[itemName] and amount > 0 then
+            local slot = (v.slot and v.slot > 0) and v.slot or nil
+            if Inventory.RemoveItem(src, itemName, amount, slot) then
+                totalPrice = totalPrice + Config.ItemsSell[itemName].price * amount
             end
-        end
-
-        if totalPrice > 0 then
-            Player.Functions.AddMoney("cash", totalPrice)
-            TriggerClientEvent('QBCore:Notify', src, "Here's $"..totalPrice..", piss off.")
-        else
-            TriggerEvent('lb-dumpster:server:pedStealItems', src)
-        end
-    end
-end)
-
---stealing
-RegisterNetEvent('lb-dumpster:server:pedStealItems', function(src)
-    local Player = QBCore.Functions.GetPlayer(src)
-    local itemsStolen = false
-
-    if Player.PlayerData.items then
-        local removedItems = {}
-
-        for k, v in pairs(Player.PlayerData.items) do
-            local itemName = v.name
-
-            if Config.ItemsSteal[itemName] then
-                local chance = math.random(1, 100)
-
-                if chance <= Config.StealChance then
-                    local amountToSteal = math.random(1, v.amount)
-                    removedItems[k] = { name = itemName, amount = amountToSteal }
-                    Player.Functions.RemoveItem(itemName, amountToSteal, k)
-                    
-                    if Config.BumSteal then
-                        TriggerClientEvent('QBCore:Notify', src, "GIVE ME YO SHIT, BITCH!")
-                        TriggerClientEvent('inventory:client:ItemBox', src, QBCore.Shared.Items[itemName], "remove")
-                    end
-                    
-                    itemsStolen = true -- Set the flag to true
-                end
-            end
-        end
-
-        if next(removedItems) then
-            TriggerEvent('lb-dumpster:server:onPedStealItems', src, removedItems)
         end
     end
 
-    if not itemsStolen then
-        TriggerClientEvent('QBCore:Notify', src, "You ain't got shit I want")
+    if totalPrice > 0 then
+        Framework.AddAccountBalance(src, 'money', totalPrice)
+        notify(src, "Here's $"..totalPrice..", piss off.", 'success')
+    else
+        pedStealItems(src)
     end
 end)
 
 -----------
 --STORAGE--
 -----------
+local registered = {}
+
 RegisterNetEvent('lb-dumpster:server:openDumpsterInventory', function(dumpsterName)
     local src = source
-    local Player = QBCore.Functions.GetPlayer(src)
-    local data = { label = 'Dumpster', maxweight = Config.StorageWeight, slots = Config.StorageSize }
+    if not Config.Storage or type(dumpsterName) ~= 'string' or not dumpsterName:match('^Container | %-?%d+ | %-?%d+ |$') then return end
 
-    if Player then
-        exports['qb-inventory']:OpenInventory(src, dumpsterName, data)
+    if not registered[dumpsterName] then
+        pcall(Inventory.RegisterStash, dumpsterName, 'Dumpster', Config.StorageSize, Config.StorageWeight)
+        registered[dumpsterName] = true
     end
+    Inventory.OpenStash(src, 'stash', dumpsterName)
 end)

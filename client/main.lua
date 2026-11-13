@@ -1,34 +1,34 @@
+-- Any target system (ox_target, qb-target, ...) and menu through community_bridge
+local Target = exports.community_bridge:Target()
+
 -----------
 ----BIN----
 -----------
 CreateThread(function()
     local targetOptions = {
         {
+            name = 'lb_dumpster_dive',
             label = Lang:t('target.label'),
             icon = 'fas fa-dumpster',
-            action = function(ent)
-                QBCore.Functions.TriggerCallback('lb-dumpster:server:getEntityState', function(wasDived)
-                    if not wasDived then
-                        isBusy = true
-                        PoliceAlert()
-
-                        if not Config.Minigame then
-                            ProgressBar(ent)
-                        else
-                            local success = MiniGame()
-                            if success then
-                                ProgressBar(ent)
-                            else
-                                QBCore.Functions.Notify(Lang:t('notifies.failed_minigame'))
-                                isBusy = false
-                            end
-                        end
-                    else
-                        QBCore.Functions.Notify(Lang:t('notifies.already_dived'), 'error', 5000)
+            distance = 1.5,
+            onSelect = function(ent)
+                CreateThread(function()
+                    if GetDumpsterState(ObjToNet(ent)) then
+                        return notify(Lang:t('notifies.already_dived'), 'error')
                     end
-                end, ObjToNet(ent))
+
+                    isBusy = true
+                    PoliceAlert()
+
+                    if not Config.Minigame or Config.Minigame == 'none' or MiniGame() then
+                        ProgressBar(ent)
+                    else
+                        notify(Lang:t('notifies.failed_minigame'), 'error')
+                        isBusy = false
+                    end
+                end)
             end,
-            canInteract = function(ent)
+            canInteract = function()
                 return not isBusy
             end
         }
@@ -37,17 +37,15 @@ CreateThread(function()
     -- Only add the "Open Dumpster" option if Config.Storage is true
     if Config.Storage then
         table.insert(targetOptions, {
-            type = "client",
-            event = "lb-dumpster:client:open:Dumpster:storage",
+            name = 'lb_dumpster_storage',
             icon = "far fa-trash-alt",
             label = "Open Dumpster",
+            distance = 1.5,
+            onSelect = function() TriggerEvent('lb-dumpster:client:open:Dumpster:storage') end,
         })
     end
 
-    exports['qb-target']:AddTargetModel(Config.Props, {
-        options = targetOptions,
-        distance = 1.5
-    })
+    Target.AddModel(Config.Props, targetOptions)
 end)
 
 
@@ -59,17 +57,14 @@ end)
 ----BUM----
 -----------
 CreateThread(function()
-    exports['qb-target']:AddTargetModel(Config.pedModels, {
-        options = {
-            { 
-                type = "client",
-                event = "lb-dumpster:client:MainMenu",
-                icon = "fa-solid fa-location-dot",
-                label = "Sell Trash",
-            },
-            
-        }, 
-        distance = 2.5, 
+    Target.AddModel(Config.pedModels, {
+        {
+            name = 'lb_dumpster_sell',
+            icon = "fa-solid fa-location-dot",
+            label = "Sell Trash",
+            distance = 2.5,
+            onSelect = function() TriggerEvent('lb-dumpster:client:MainMenu') end,
+        },
     })
 end)
 
@@ -88,10 +83,10 @@ RegisterNetEvent('lb-dumpster:client:MainMenu', function()
                 event = "lb-dumpster:server:sellItems",
             }
         },
-       
     }
 
-    exports['qb-menu']:openMenu(MainMenu)
+    -- community_bridge opens this qb-menu style table with whatever menu the server runs
+    exports.community_bridge:Menu().Open(MainMenu, true)
 end)
 
 -----------
@@ -102,15 +97,10 @@ AddEventHandler('lb-dumpster:client:open:Dumpster:storage', function()
     if not Config.Storage then return end
 
     local DumpsterFound = ClosestContainer()
+    if not DumpsterFound then return end
     local Dumpster = 'Container | '..math.floor(DumpsterFound.x).. ' | '..math.floor(DumpsterFound.y)..' |'
 
-    if Config.Inventory == "Old" then
-        TriggerServerEvent("inventory:server:OpenInventory", "stash", Dumpster, {maxweight = Config.StorageWeight, slots = Config.StorageSize})
-    else
-        TriggerServerEvent("lb-dumpster:server:openDumpsterInventory", Dumpster)
-    end
-
-    TriggerEvent("inventory:client:SetCurrentStash", Dumpster)
+    TriggerServerEvent("lb-dumpster:server:openDumpsterInventory", Dumpster)
 end)
 
 function ClosestContainer()
@@ -139,22 +129,22 @@ end
 --BUM PEDS--
 ------------
 
-function loadAnimDict(dict) 
-    while not HasAnimDictLoaded(dict) do 
-        RequestAnimDict(dict) 
-        Wait(0) 
-    end 
+function loadAnimDict(dict)
+    while not HasAnimDictLoaded(dict) do
+        RequestAnimDict(dict)
+        Wait(0)
+    end
 end
 
 function StartJobPed(coords, model, scenario)
     local ped
     if not DoesEntityExist(ped) then
-        RequestModel(model) 
-        while not HasModelLoaded(model) do 
-            Wait(0) 
+        RequestModel(model)
+        while not HasModelLoaded(model) do
+            Wait(0)
         end
         ped = CreatePed(0, model, coords, false, false)
-               
+
         SetEntityAsMissionEntity(ped)
         SetPedFleeAttributes(ped, 0, 0)
         SetBlockingOfNonTemporaryEvents(ped, true)
